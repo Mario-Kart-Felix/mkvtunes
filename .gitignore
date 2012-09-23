@@ -1,0 +1,4 @@
+node_modules
+*.m4v
+*.mkv
+.DS_Store

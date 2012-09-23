@@ -23,7 +23,7 @@ var temp_dir = '.';
 
 var max_audio_recoders = 2;
 
-var test_mkv = 'Ed.Wood.1994.720p.mkv';
+var test_mkv = process.argv[2] || 'Ed.Wood.1994.720p.mkv';
 //var test_mkv = 'Line Of Sight.mkv';
 
 var language_map_2_to_3 = {"aa":"aar","ab":"abk","af":"afr","ak":"aka","sq":"alb","am":"amh","ar":"ara","an":"arg","hy":"arm","as":"asm","av":"ava","ae":"ave","ay":"aym","az":"aze","ba":"bak","bm":"bam","eu":"baq","be":"bel","bn":"ben","bh":"bih","bi":"bis","bs":"bos","br":"bre","bg":"bul","my":"bur","ca":"cat","ch":"cha","ce":"che","zh":"chi","cu":"chu","cv":"chv","kw":"cor","co":"cos","cr":"cre","cs":"cze","da":"dan","dv":"div","nl":"dut","dz":"dzo","en":"eng","eo":"epo","et":"est","ee":"ewe","fo":"fao","fj":"fij","fi":"fin","fr":"fre","fy":"fry","ff":"ful","ka":"geo","de":"ger","gd":"gla","ga":"gle","gl":"glg","gv":"glv","el":"gre","gn":"grn","gu":"guj","ht":"hat","ha":"hau","he":"heb","hz":"her","hi":"hin","ho":"hmo","hr":"hrv","hu":"hun","ig":"ibo","is":"ice","io":"ido","ii":"iii","iu":"iku","ie":"ile","ia":"ina","id":"ind","ik":"ipk","it":"ita","jv":"jav","ja":"jpn","kl":"kal","kn":"kan","ks":"kas","kr":"kau","kk":"kaz","km":"khm","ki":"kik","rw":"kin","ky":"kir","kv":"kom","kg":"kon","ko":"kor","kj":"kua","ku":"kur","lo":"lao","la":"lat","lv":"lav","li":"lim","ln":"lin","lt":"lit","lb":"ltz","lu":"lub","lg":"lug","mk":"mac","mh":"mah","ml":"mal","mi":"mao","mr":"mar","ms":"may","mg":"mlg","mt":"mlt","mn":"mon","na":"nau","nv":"nav","nr":"nbl","nd":"nde","ng":"ndo","ne":"nep","nn":"nno","nb":"nob","no":"nor","ny":"nya","oc":"oci","oj":"oji","or":"ori","om":"orm","os":"oss","pa":"pan","fa":"per","pi":"pli","pl":"pol","pt":"por","ps":"pus","qu":"que","rm":"roh","ro":"rum","rn":"run","ru":"rus","sg":"sag","sa":"san","si":"sin","sk":"slo","sl":"slv","se":"sme","sm":"smo","sn":"sna","sd":"snd","so":"som","st":"sot","es":"spa","sc":"srd","sr":"srp","ss":"ssw","su":"sun","sw":"swa","sv":"swe","ty":"tah","ta":"tam","tt":"tat","te":"tel","tg":"tgk","tl":"tgl","th":"tha","bo":"tib","ti":"tir","to":"ton","tn":"tsn","ts":"tso","tk":"tuk","tr":"tur","tw":"twi","ug":"uig","uk":"ukr","ur":"urd","uz":"uzb","ve":"ven","vi":"vie","vo":"vol","cy":"wel","wa":"wln","wo":"wol","xh":"xho","yi":"yid","yo":"yor","za":"zha","zu":"zul"};
@@ -295,7 +295,7 @@ function mpeg4_mux_output(mkv, callback) {
     
     _.chain(mkv.tracks).filter(is_audio).sortBy(language_order).each(function (track) {
 	options.push('-add');
-	options.push(track.file_name + lang_tag(track));
+	options.push(track.file_name + lang_tag(track) + ':group=3');
     });
     
     _.chain(mkv.tracks).filter(is_subtitles).sortBy(language_order).each(function (track) {
@@ -327,8 +327,9 @@ function mpeg4_mux_output(mkv, callback) {
     
 }
 
-function cleanup_temporary_files(mkv) {
+function cleanup_temporary_files(mkv,callback) {
     console.log('Cleaning up'.green);
+    
     _.each(mkv.tracks, function (track) {
 	if(!track.external) {
 	    fs.unlink(track.file_name);
@@ -340,6 +341,8 @@ function cleanup_temporary_files(mkv) {
     
     if(mkv.tags && mkv.tags.cover)
 	fs.unlink(mkv.tags.cover);
+    
+    callback(null, mkv);
 }
 
 function http_jquery(query, callback) {
@@ -429,7 +432,6 @@ function kinopoisk_get_movie_info(url, callback)
 			    imgsrc = null;
 			}
 			
-			console.log(imgsrc + ' // ' + bigsrc);
 
 			if(bigsrc || imgsrc) {
 			    kinopoisk_load_poster((bigsrc || imgsrc), function(err, image) {
@@ -493,13 +495,13 @@ function mkv_scrape_metadata(mkv, callback)
 	    
 	    mkv.tags = {};
 	    mkv.tags.artist = movie.actors;
-	    mkv.tags.name = movie.original_name || movie.name;
+	    mkv.tags.name = movie.original_name != undefined ? movie.original_name + ' / ' + movie.name : movie.name;
 	    mkv.tags.created = movie.year;
 	    mkv.tags.genre = movie.genre;
-	    mkv.tags.comment = movie.description.replace(/[:]/g,' ');
+	    mkv.tags.comment = movie.description.replace(/[:]/g,' ').replace(/\s+/g, ' ');
 	    
 	    if(movie.poster) {
-		var poster_file_name = make_temp_name(mkv.base_name + '_poster.' + movie.poster_format);
+		var poster_file_name = make_temp_name(safe_name(mkv.base_name) + '_poster.' + movie.poster_format);
 		fs.writeFile(poster_file_name, movie.poster, null, function(err) {
 		    mkv.tags.cover = poster_file_name;
 		    callback(null, mkv);
@@ -540,7 +542,7 @@ function mkv_process_file(mkv_file_name, callback) {
 
 mkv_process_file(test_mkv, function (err, mkv) {
     var log_name = 'mkvtunes.log';
-    fs.writeFile(log_name, sys.inspect(mkv), function (errwr) {
+    fs.writeFile(log_name, sys.inspect(mkv), 'utf-8', function (errwr) {
 	console.log(errwr ? ('Failed to write log ' + errwr).red : ('Saved log to ' + log_name).green);
     });
     if(err) {

@@ -14,4 +14,21 @@ into iOS.
 
 ## Requirements
 
-node.js, a few modules, mkvtoolsnix, MP4Box and ffmpeg
+- node.js
+- mkvtoolnix
+- MP4Box (gpac)
+- ffmpeg
+
+For Mac:
+
+	$ brew install mkvtoolnix gpac ffmpeg node
+	$ cd mkvtunes
+	$ npm -g install
+	
+For apt-based Linux:
+	
+	$ sudo add-apt-repository ppa:chris-lea/node.js
+	$ sudo apt-get update
+	$ sudo apt-get install nodejs npm mkvtoolnix gpac ffmpeg 
+	$ cd mkvtunes
+	$ npm -g install

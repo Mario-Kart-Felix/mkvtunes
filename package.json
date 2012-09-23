@@ -1,0 +1,22 @@
+{
+    "name": "mkvtunes",
+    "version": "0.0.1",
+    "description": "Convert MKV to MPEG4 with some fancies",
+    "keywords": ["mkv", "convert", "mpeg4", "command line"],
+    "author": "Pavel Kurnosov <pashky@gmail.com>",
+    "repository": "https://github.com/pashky/mkvtunes",
+    "main": "index",
+    "bin": { "mkvtunes": "mkvtunes.js" },
+    "dependencies": { 
+	"underscore": ">=1.3.1",
+	"carrier": ">=0.1.7",
+	"colors": ">=0.6.0",
+	"async": ">=0.1.22",
+	"commander": ">=1.0.4",
+	"jsdom": ">=0.2.15",
+	"request": ">=2.11.4",
+	"iconv": ">=1.2.3"
+    },
+    "engines": { "node" : ">= 0.8.8"},
+    "preferGlobal": true
+}
